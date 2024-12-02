@@ -1,0 +1,214 @@
+Overview:
+This is a codebase for playing games of Three Trios.
+All files within within src are in the cs3500.threetrios package. Within that package,
+the code is broken out into 5 make packages and one main class. The five packages are controller,
+filereader, model, strategies, and view. Within the controller package we currently have an
+interface for a ThreeTriosController, and an implementation of that interface. Within the filereader
+there is a class ThreeTriosFile reader that has methods for creating Board and Card objects based on
+the given files. The model package includes both a read only model and a mutable model with an
+implementation. There is also a subpackage components within the model package that has interfaces
+and implementations for various objects within the model (Board, CardSet, Card, etc.). In the
+strategies package, there is an ThreeTriosStrategy interface, and three strategy implementation
+that return optimal moves based on whatever strategy they represent. Within the view package, we
+have a general view interface, and then two implementations, a textview and a gui. Finally,
+ThreeTrios is the main class that runs the program.
+
+QuickStart:
+TriosBoard board = ThreeTriosFileReader.fromBoardFile(Board File);
+List<TriosCard> cards = ThreeTriosFileReader.fromCardFile(Card File);
+ThreeTriosTwoPlayerModel model = new ThreeTriosTwoPlayerModel(cards, board, false);
+ThreeTriosTextView view = new ThreeTriosTextView(model, System.out);
+
+Key Components:
+    ThreeTriosTwoPlayerModel:
+    - Represents a two player model for a game of Three Trios
+    - Represents a full game of ThreeTrios with hands and board, and cards
+    - Contains all code necessary to play the game, and observe the game
+    - Row and Col are 0 index based
+    - The Blue player goes first
+    - A turn is defined as a Player playing a valid Card to the Board, and the resulting Battles
+    - The game ends once the final battle concludes, the final battle is the battle that occurs
+      after the last open board slot is filled and battle is done. (See piazza @873)
+    - Cards are dealt to players traditionally, with the cards being given to Player 1, then
+      Player 2, and repeating in this pattern until the hands are full
+    - After completion of doBattle method, currentPlayer updates
+
+    TriosCard:
+    - Represents a Card in the game of Three Trios
+    - Implemented using AttackValue and Direction enums
+        - AttackValue represents a Cards potential attack value in a certain direction, value
+          must be between 1 and 10, where 10 is represented with an "A"
+        - Direction represents one of the four cardinal directions (North, South, East, West)
+
+    TriosHand:
+    - Represents a players hand in the game of Three Trios
+    - Implemented as a simple List
+
+    TriosBoard:
+    - Represents a Board in the game of Three Trios
+    - Implemented using three 2D arrays, one that holds the hole spaces, one that holds the Players
+      for each card at a given space, and one that holds the card spaces
+    - The coordinate system for the Board is as follows:
+        - 0,0 is located in the top left corner
+        - columns increase by 1 moving from left to right
+        - rows increase by 1 moving from top to bottom
+        - the first index is the row and the second index is the col
+
+    ThreeTriosFileReader:
+    - Represents a file reader for three trios configuration files
+    - Implemented to take in cards and board configuration files and create the corresponding
+      objects
+    - Skips card entries that are have invalid inputs, but creates all other instances of cards
+    - Only creates a TriosBoard if all inputs are valid
+
+    ThreeTriosTextView:
+    - Represents a text view for Three Trios
+    - Implemented to render the state of the game as a String
+
+    ThreeTriosTwoPlayerGUIController:
+    - Represents a Controller that interfaces with a mutable version of the model, and a view
+    - Listens to the view, and tells the model to execute certain methods based on actions in the
+      view
+
+    CornerStrategy:
+    - Represents the corner strategy in ThreeTrios
+    - The corner strategy involves trying to play cards from your hand to the corners of the Board
+      that result in the highest possible "score" based on the attackValue orientation of a card
+    - the score of a card is calculated by multiplying the two attackValues on the card that can be
+      attacked by other cards on the board (for example, a card's score in the upper left most
+      position on the board would be calculated by multiplying the south and east attack value
+
+    MaxFlipStrategy:
+    - Represents the max flip strategy in ThreeTrios
+    - The max flip strategy involves finding the card and position on the board that results in the
+      most number of opponents cards being flipped
+
+    SingleMinMaxStrategy:
+    - Represents the single min max strategy in ThreeTrios
+    - The single min max strategy involves looking at the opponents responsive play to each possible
+      play the the current player can make, the strategy then picks the best move to counteract the
+      opponents resulting move
+
+    HybridStrategy:
+    - Represents a hybrid strategy in ThreeTrios
+    - The hybrid strategy takes in a list of strategies and returns the move that the most
+      strategies think is the best move
+    - If there is not a most common move among the strategies, the move given by the first strategy
+        that succesfully selected a move is selected
+
+    ThreeTriosMove:
+    - Represents a move that a player can make in ThreeTrios
+    - a move is comprised of cardIndex, a rowIndex, and a colIndex, all 0-based
+    - the cardIndex is from the currentPlayers hand, which the model keeps track of
+
+    ThreeTriosGraphicsView:
+    - Represents a GUI for a game of ThreeTrios
+    - implementation ensures that the view is composed of a single TriosPanel and a Read Only
+      version of the model
+    - this ensures that the view cannot alter the model in any way
+    - addFeaturesListener() method allows for other parts of the program to listen to the view
+      and act as a result of various view actions
+
+    TriosPanel:
+    - Represents a JPanel for rendering/drawing the state of the model of a game of ThreeTrios
+    - Implementation ensures that it can only take in a Read Only version of the model to eliminate
+      any possibility of mutation
+    - Implementation also ensures that it has a list of ViewFeatures, that can listen to the panel
+    - setBoardIndex() method returns the board index of the space that was clicked on the panel
+    - setHandIndex() method returns the card index of the hand of the current players turn that
+      was clicked
+
+    ThreeTriosGUIController:
+    - Represents a controller in a game of ThreeTrios
+    - Responsible for controlling either a human player and a computer player, and listening to
+      the GUI, Player, and Model for the corresponding actions and delegating to each
+      other component accordingly
+
+    ThreeTriosPlayer:
+    - Represents a external player playing a game of ThreeTrios
+    - Either a AI or a human
+    - Listens to the controller for when it is their turn to play, and returns the move they want to
+      do
+
+    ThreeTriosMutableBroadcastModel:
+    - Represents a mutable version of the model with the ability to broadcast when events happen
+      in the model to any listeners of the model
+    - interfaces with ThreeTriosGUIControllers, to tell it when it is a new players turn, and when
+      the game has started or is over
+
+    ModelFeatures:
+    - Represents actions that the model can alert listeners that have happend
+    - Examples include that it is a new players turn, that the game is over, and that the game has
+      started
+
+    GameActions:
+    - Represents actions that players and the view can execute throughout the game
+    - Examples include selecting a card index from their hand, and selecting a board slot
+
+
+Map:
+    Model: /src/cs3500/threetrios/model/ThreeTriosTwoPlayerModel.java
+    TriosBoard: /src/cs3500/threetrios/model/components/TriosBoard.java
+    TriosCard: /src/cs3500/threetrios/model/components/TriosCard.java
+    TriosHand: /src/cs3500/threetrios/model/components/TriosHand.java
+    ThreeTriosFileReader: /src/cs3500/threetrios/filereader/ThreeTriosFileReader.java
+    ThreeTriosTextView: /src/cs3500/threetrios/view/textview/ThreeTriosTextView.java
+    ThreeTriosGraphicsView: /src/cs3500/threetrios/view/gui/ThreeTriosGraphicsView.java
+    ThreeTriosGUIController: /src/cs3500/threetrios/controller/ThreeTriosGUIController.java
+    ThreeTriosPlayer: /src/cs3500/threetrios/controller/player/ThreeTriosPlayer.java
+    ThreeTriosStrategy: /src/cs3500/threetrios/strategies/ThreeTriosStrategy.java
+    ThreeTriosMutableBroadcastModel:
+                    /src/cs3500/threetrios/model/ThreeTriosMutableBroadcastModel.java
+    ModelFeatures:  /src/cs3500/threetrios/model/ModelFeatures.java
+    GameActions: /src/cs3500/threetrios/controller/GameActions.java
+    ThreeTriosGUI: /src/cs3500/threetrios/view/gui/ThreeTriosGUIw.java
+
+*******
+We did the extra credit for HW6
+Strategies can be found in the strategies package,
+strategy tests can be found in the strategies test package
+They are explained below in the readme, next to the other strategies
+*******
+
+Changes for part 2:
+- added isLegalPlay(int row, int col) public method to ThreeTriosModel
+- added getPlayerScore(Player player) public method to ThreeTriosModel
+- added getPlayerAt(int row, int col) in the Board and Model implementations that return the player
+  at a given spot on the board
+- refactored doSubBattle(TriosCard attacker) to take in a Board as well, so that it can be used
+  inside of howManyFlips()
+- added getFlips(TriosCard card, Player player, int row, int col) public method to ThreeTriosModel
+- refactored TriosCards to not include anything related to Players
+- updated Board implementation to account for which Cards are owned by which players
+- updated playCard method in the model to only work for the current player
+- updated do battle to just use the last played card
+- implemented strategies interface and corresponding concrete classes (CornerStrategy,
+  MaxFlipStrategy, SingleMinMaxStrategy, ThreeTriosMove)
+- implemented controller to listen to the view
+- implemented ViewFeatures interface to store behaviors for Features that listen to the view
+- implemented ThreeTriosGUI interface and an implementation of that interface ThreeTriosGraphicsView
+  that act as a GUI
+- we believe that the simplest strategy in the CornerStrategy, but we included transcript files for
+  both the CornerStrategy and the MaxFlipsStrategy. For the corner strategy, the txt file looks good
+  because it checks all of the corners. And for the max-flips-strategy, the txt file looks good
+  because it checks each spot on the board and iterates through each card in the current players
+  hand. In this case, the mock has a board width of 72 and a height of 2, and there are 2 cards in
+  the current players hand.
+
+Changes for part 3:
+- added ModelBroadcaster, ThreeTriosMutableBroadcastModel, ModelFeatures, and SubscriptionModel
+  to allow for other things to subscribe to the model, and for the model to alert subscribers when
+  things have happened.
+- renamed ViewFeatures to GameActions
+- added ThreeTriosPlayer, ComputerThreeTriosPlayer, and HumanThreeTriosPlayer to represents the
+  types of players for the game
+- Controller ensures that players cannot select cards from opponents hands, our view actually allows
+  this, but the controller enforces this rule by not letting it be truly selected
+- added ThreeTriosPlayerController as a game controller that is responsible for acting for a player,
+  and listening to the model and view
+- In the command line, users can enter human for a human player. Strategy1 is a hybrid strategy
+  that uses the corners strategy and then max flips after there are no more corners. Strategy2 is
+  max flip strategy. Strategy3 is the least flippable strategy. Strategy4 is the min max max flip
+  strategy. Strategy5 is a min max based on least flippable. If no strategy argument is given,
+  we will assume that the player will be a human.
+- added tests for all new classes and mocked components to test them in isolation
